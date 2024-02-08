@@ -1,0 +1,129 @@
+<!-- @bariod 2024 -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>SBB clock</title>
+</head>
+
+<body style="background-color: slategrey;"
+      onload="tick()">
+    <canvas id="clockCanvas"
+            width="1000"
+            height="1000">
+    </canvas>
+</body>
+
+<script>
+    const canvas = document.getElementById("clockCanvas");
+    const ctx = canvas.getContext("2d");
+    ctx.imageSmoothingQuality = "high";
+
+    // scale to available space in canvas
+    const scaleFactor = canvas.height / 250;
+    ctx.scale(scaleFactor, scaleFactor);
+
+    // get center of clock without scaling
+    const centerY = (canvas.height / 2) / scaleFactor;
+    const centerX = (canvas.width / 2) / scaleFactor;
+
+    function drawCase() {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 100, 0, 2 * Math.PI);
+
+        // clock frame
+        ctx.lineWidth = 10;
+        ctx.strokeStyle = "silver";
+        ctx.stroke();
+
+        // watch face color
+        ctx.fillStyle = "white";
+        ctx.fill();
+
+        ctx.restore();
+    }
+
+    // Hour lines
+    function drawHourLines() {
+        for (let i = 0; i < 12; i++) {
+            ctx.save();
+            ctx.translate(centerX, centerY);
+            ctx.rotate(i * 30 * Math.PI / 180);
+            ctx.fillRect(-3, -95, 6, 25);
+            ctx.restore();
+        }
+    }
+
+    // Minute lines
+    function drawMinuteLines() {
+        for (let i = 0; i < 60; i++) {
+            ctx.save();
+            ctx.translate(centerX, centerY);
+            ctx.rotate(i * 6 * Math.PI / 180);
+            ctx.fillRect(-1, -95, 2, 10);
+            ctx.restore();
+        }
+    }
+
+    // Second hand - finishes rotation after 58.5s
+    function drawSecondHand(second) {
+        if ((second > 58.5) || (second <= 0))
+            second = 58.5;  // wait until 60s have passed
+
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        ctx.rotate(second * (360 / 58.5) * Math.PI / 180);  // get angle for 58.5s rotations
+        ctx.fillStyle = "red";
+        ctx.fillRect(-1, -60, 2, 85);
+
+        ctx.beginPath();
+        ctx.arc(0, -60, 10, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.restore();
+    }
+
+    // Minute hand
+    function drawMinuteHand(minute) {
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        ctx.rotate(minute * (360 / 60) * Math.PI / 180);
+        ctx.fillRect(-3, -90, 6, 110);
+        ctx.beginPath();
+        ctx.restore();
+    }
+
+    // Hour hand
+    function drawHourHand(hour, minute) {
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        ctx.rotate((hour * (360 / 12) + minute / 2) * Math.PI / 180);
+        ctx.fillRect(-4, -60, 8, 80);
+        ctx.beginPath();
+        ctx.restore();
+    }
+
+    function tick() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);  // clear canvas for redrawing
+
+        timeStamp = new Date();
+
+        let second = timeStamp.getSeconds();
+        second += timeStamp.getMilliseconds() / 1000;
+
+        let minute = timeStamp.getMinutes();
+        let hour = timeStamp.getHours();
+
+        drawCase();
+        drawHourLines();
+        drawMinuteLines();
+        drawHourHand(hour, minute);
+        drawMinuteHand(minute);
+        drawSecondHand(second);
+    }
+
+    setInterval(tick, 10)  // 100FPS should be smooth enough
+</script>
+
+</html>
